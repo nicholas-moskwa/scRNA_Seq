@@ -1,4 +1,5 @@
-#Version 1
+    #Version 1
+  #This version provides all data for 2022 publication
 #Uses Seurat packages for analysis: https://satijalab.org/seurat/index.html
 #This version is using data that is deconvoluted using CellRanger
 #Includes function for finding number/percentage of cells expressing a specific gene
@@ -14,7 +15,7 @@
 #Subsets out stromal data and re-analyzes the data
 #Analyzes data, using violin and UMAP plots for lists of genes
 #Creates gene expression lists based on clustering
-#Integrates yesFGF2 organoid stroma, noFGF2 organoid stroma with E16 SMG stroma
+#Integrates yesFGF2 organoid stroma, noFGF2 organoid stroma with or without E16 SMG stroma
  #noFGF2_Organoid
   #min.cells = 3, min.features = 200
   #subset = nFeature_RNA > 200 & nFeature_RNA < 9000 & 
@@ -28,8 +29,62 @@
   #40 dimensions
   #resolution = 2.0
  #Integration uses
-  #20 dimensions
+  #40 dimensions
   #resolution = 0.6
+
+######## sessionInfo()
+#R version 3.6.3 (2020-02-29)
+#Platform: x86_64-pc-linux-gnu (64-bit)
+#Running under: Debian GNU/Linux 10 (buster)
+
+#Matrix products: default
+#BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.3.5.so
+
+#locale:
+#  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+#[3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+#[5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=C             
+#[7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+#[9] LC_ADDRESS=C               LC_TELEPHONE=C            
+#[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+#attached base packages:
+#  [1] stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+#  [1] stringr_1.4.0   magrittr_1.5    patchwork_1.0.0 pheatmap_1.0.12
+#[5] ggplot2_3.3.0   dplyr_0.8.5     cowplot_1.0.0   Seurat_3.1.5   
+
+#loaded via a namespace (and not attached):
+#  [1] httr_1.4.1          tidyr_1.0.2         jsonlite_1.6.1     
+#[4] viridisLite_0.3.0   splines_3.6.3       lsei_1.2-0         
+#[7] leiden_0.3.3        gtools_3.8.2        assertthat_0.2.1   
+#[10] ggrepel_0.8.2       globals_0.12.5      pillar_1.4.3       
+#[13] lattice_0.20-44     glue_1.4.0          reticulate_1.15    
+#[16] digest_0.6.25       RColorBrewer_1.1-2  colorspace_1.4-1   
+#[19] htmltools_0.4.0     Matrix_1.2-18       plyr_1.8.6         
+#[22] pkgconfig_2.0.3     tsne_0.1-3          listenv_0.8.0      
+#[25] purrr_0.3.4         scales_1.1.0        RANN_2.6.1         
+#[28] gdata_2.18.0        RSpectra_0.16-0     Rtsne_0.15         
+#[31] tibble_3.0.1        farver_2.0.3        ellipsis_0.3.0     
+#[34] withr_2.4.2         ROCR_1.0-7          pbapply_1.4-2      
+#[37] lazyeval_0.2.2      survival_3.2-7      crayon_1.4.1       
+#[40] future_1.17.0       nlme_3.1-152        MASS_7.3-51.5      
+#[43] gplots_3.0.3        ica_1.0-2           tools_3.6.3        
+#[46] fitdistrplus_1.0-14 data.table_1.12.8   lifecycle_0.2.0    
+#[49] plotly_4.9.2.1      munsell_0.5.0       cluster_2.1.0      
+#[52] irlba_2.3.3         compiler_3.6.3      rsvd_1.0.3         
+#[55] caTools_1.18.0      rlang_0.4.5         grid_3.6.3         
+#[58] ggridges_0.5.2      rstudioapi_0.13     RcppAnnoy_0.0.16   
+#[61] rappdirs_0.3.1      htmlwidgets_1.5.1   igraph_1.2.5       
+#[64] labeling_0.3        bitops_1.0-6        npsurv_0.4-0       
+#[67] gtable_0.3.0        codetools_0.2-16    reshape2_1.4.4     
+#[70] R6_2.5.0            gridExtra_2.3       zoo_1.8-7          
+#[73] uwot_0.1.8          future.apply_1.5.0  KernSmooth_2.23-16 
+#[76] ape_5.4             stringi_1.4.6       parallel_3.6.3     
+#[79] Rcpp_1.0.4.6        vctrs_0.2.4         sctransform_0.2.1  
+#[82] png_0.1-7           tidyselect_1.0.0    lmtest_0.9-37  
+
 ############################## Libraries and start up ##########################################
 ################################################################################################
 
@@ -37,10 +92,11 @@
 reticulate::use_condaenv(condaenv = "seurat", conda = "/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/miniconda3/bin/conda")
 
 library(Seurat)
-library(SeuratData)
+#library(SeuratData)
 library(cowplot)
 library(dplyr)
 library(ggplot2)
+library(pheatmap)
 library(patchwork)
 library(magrittr)
 library(stringr)
@@ -63,17 +119,36 @@ Make_pdf <- function(Title, plot, width, height){
 Gene_Graphs <- function(GeneList, Object, Name){
 	for(i in GeneList[1:100]){
 	print(i)
-	plot3 <- FeaturePlot(Object, features = i, min.cutoff = "q9")
-	plot4 <- VlnPlot(Object, features = i, pt.size = 0.1) + ylim(0,NA) + NoLegend()
+	plot3 <- FeaturePlot(Object, features = i, min.cutoff = "q9") + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+	plot4 <- VlnPlot(Object, features = i, pt.size = 0.1) + ylim(0,NA) + NoLegend() + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 18))
 	Dot_Plot_Title <- str_c("UMAP_Plot_", i, "_", Name, "_01.pdf")
 	Violin_Plot_Title <- str_c("Violin_Plot_", i, "_", Name, "_01.pdf")
-	pdf(file = Dot_Plot_Title)
-	print(plot3)
+	pdf(file = Dot_Plot_Title, width = 8, height = 5)
+	  print(plot3)
 	dev.off()  
-	pdf(file = Violin_Plot_Title)
-	print(plot4)
-	dev.off()  
+	pdf(file = Violin_Plot_Title, width = 8, height = 4)
+	  print(plot4)
+	dev.off()
 	}
+}
+
+#Fucntion for quickly making UMAP and violin plots for all genes from a gene list
+#Loop to create Feature plots and violin plots for GenesLists, can pass any gene-list to generate plots
+#Splits the graphs based on the sample
+Gene_Graphs_2 <- function(GeneList, Object, Name){
+  for(i in GeneList[1:100]){
+    print(i)
+    plot3 <- FeaturePlot(Object, features = i, min.cutoff = "q9", split.by = "sample") + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+    plot4 <- VlnPlot(Object, features = i, pt.size = 0.1, split.by = "sample") + ylim(0,NA) + theme(legend.text = element_text(face = "bold"),axis.text.x = element_text(size = 15,face = "bold"),axis.text.y = element_text(size = 15,face = "bold"), axis.title.y = element_text(size = 30))
+    Dot_Plot_Title <- str_c("UMAP_Plot_SampleSplit_", i, "_", Name, "_01.pdf")
+    Violin_Plot_Title <- str_c("Violin_Plot_SampleSplit_", i, "_", Name, "_01.pdf")
+    pdf(file = Dot_Plot_Title, width = 16, height = 5)
+      print(plot3)
+    dev.off()  
+    pdf(file = Violin_Plot_Title, width = 10, height = 5.5)
+      print(plot4)
+    dev.off()
+  }
 }
 
 # Function that can calculate proportion of cells expressing a gene
@@ -95,7 +170,7 @@ TotalCellExpringGene <- function(object, genes, group.by = "all"){
     list = SplitObject(object, group.by)
     factors = names(list)
     
-    results = lapply(list, PrctCellExpringGene, genes=genes)
+    results = lapply(list, TotalCellExpringGene, genes=genes)
     for(i in 1:length(factors)){
       results[[i]]$Feature = factors[i]
     }
@@ -167,7 +242,7 @@ Co_Postitive_cell_ID <- CellData %>% subset(Pdgfra>0) %>% subset(Pdgfrb>0) %>% s
 #Number of Co_positive cells
 Co_Postitive_cell_Total <- nrow(Co_Postitive_cell_ID)
 
-#This is a function that does the same thing as finding nubmer of cells expressing a gene, but for two genes.
+#This is a function that does the same thing as finding number of cells expressing a gene, but for two genes.
 # for total co-positive cells:
 Co_Positive <- function(object,gene1,gene2){
   CellData <- FetchData(object, vars = c(gene1,gene2), slot = "data")
@@ -366,7 +441,13 @@ Genes_of_Interest <- c("Ptprc", "Pdpn", "Prox1", "Lyve1","Hba-a1", "Hba-a2",
                       "Cnn1", "Sox10", "Sox2", "Il7r", "S100a4", "Ms4a2", "Hdc",
                       "Cenpa", "Cenpe", "Cenpf", "Mki67", "Hist1h1a", "Hist1h1b",
                       "Top2a", "Hist1h2ae", "Cd74", "Lsp1", "H2-Aa", "H2-Ab1")
-Stromal_Markers <- c("Thy1", "Cnn1", "Acta2","Pdgfrb", "Pdgfra", "Vim", "Col1a1")
+Epithelial_Markers <- c("Aqp5", "Bhlha15", "Bpifa2", "Muc19", "Smgc", "Cdh1", "Epcam", 
+                        "Krt5", "Krt14", "Krt19", "Acta2", "Cnn1", "Sox10", "Sox2", 
+                        "Cenpa", "Cenpe", "Cenpf", "Mki67", "Hist1h1a", "Hist1h1b",
+                        "Top2a", "Hist1h2ae")
+Stromal_Markers <- c("Eng","Gli1","Thy1","Cnn1","Acta2","Pdgfrb","Pdgfra","Vim","Col1a1")
+Stromal_Ligands <- c("Fgf2","Fgf10","Bmp2","Bmp4","Bmp7","Kitl","Tgfb1","Tgfb2", "Tgfb3",
+                     "Wnt2","Wnt4","Areg","Ereg")
 ECM_Genes_of_Interest <- c("Col1a1", "Col1a2", "Col3a1", "Col4a1","Col5a1", "Col6a1",
                           "Col7a1", "Col8a1", "Col9a1", "Col11a1","Col12a1", "Col15a1",
                           "Eln", "Fn1", "Fmod", "Lama1", "Lama2", "Lama3",
@@ -623,6 +704,16 @@ Genes_Mascharak2021 <- c("Msn",
                          "Fat4",
                          "Dchs1",
                          "Dchs2")
+#https://advances.sciencemag.org/content/7/24/eabg6005?elqTrackId=5ca8a69ac8ff4f3080e47a4a072a3d66&elq=6c66d2cfe7a44810b72937392ed0cbc5&elqaid=31499&elqat=1&elqCampaignId=10598
+Genes_Xie2021 <- c("Eln", "Cxcl14", "Npnt", "Fn1", "Hspb1", "Xist", "Nebl", "Tagln", "Cd74", "Cxcl1", "Cxcl2", "Cxcl5", "Cxcl10", "Cxcl11", "Cxcl12", "Cxcl16")
+FGFR_Genes <- c("Fgfr1", "Fgfr2", "Fgfr3", "Fgfr4", "Fgfrl1")
+#https://www.nature.com/articles/s41586-020-2941-1
+Myofibroblast_Genes <- c("Notch3", "Rgs5", "Meg3", "Colec11", "Cxcl12")
+#https://www.nature.com/articles/s41467-021-24110-y
+Skin_fibroblast_Genes <- c("Postn","Aspn","Comp","Col11a1","Col12a1","Col5a2",
+                           "Creb3l1","Adam12","Nrep","Tnfrsf12a",
+                           "Runx2","Scx","Sox4","Jun","CD27","CD40")
+
 #Creates Feature plots and violin plots for Geneslists, can pass any gene-list to generate plots
 Gene_Graphs(Genes_of_Interest, agg.data.yesFGF2, "yesFGF2")
 
@@ -973,7 +1064,7 @@ agg.combined.stroma <- RunUMAP(agg.combined.stroma, reduction = "pca", dims = 1:
 saveRDS(agg.combined.stroma, file = "Exp_209_231_235_Stroma_(SEURAT_v3)_01.rds")
 setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Integrated_E16_YesNo_FGF2_Stroma")
 # Reads integrated stromal data
-agg.combined.stroma <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Integrated_E16_YesNo_FGF2_All/Exp_209_231_235_(SEURAT_v3)_01.rds")
+agg.combined.stroma <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Integrated_E16_YesNo_FGF2_Stroma/Exp_209_231_235_Stroma_(SEURAT_v3)_01.rds")
 #Graphs new data
 plot1 <- DimPlot(agg.combined.stroma, reduction = "umap", group.by = "protocol")
 Make_pdf("Integrated_UMAP_Sample_Label_01.pdf",plot1,6.25,5)
@@ -989,6 +1080,14 @@ Gene_Graphs(Mmp_Genes_of_Interest,agg.combined.stroma,"integrated")
 Gene_Graphs(TGFb_super_Genes_of_Interest,agg.combined.stroma,"integrated")
 Gene_Graphs(ECM_Genes_of_Interest,agg.combined.stroma,"integrated")
 Gene_Graphs(Cell_Cycle_Genes_of_Interest,agg.combined.stroma,"integrated")
+
+#Make double feature plots for markers that separate stromal clusters
+plot1 <-  FeaturePlot(agg.combined.stroma, features = c("Thy1", "Pdgfra"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue","red"))
+Make_pdf("UMAP_plot_Pdgfra_Thy1_01.pdf",plot1,40,8)
+plot1 <- FeaturePlot(agg.combined.stroma, features = c("Pdgfrb", "Pdgfra"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue","red"))
+Make_pdf("UMAP_plot_Pdgfra_Pdgfra_01.pdf",plot1,40,8)
+plot1 <- FeaturePlot(agg.combined.stroma, features = c("Pdgfra", "Acta2"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "red","blue"))
+Make_pdf("UMAP_plot_Pdgfra_aSMA_01.pdf",plot1,40,8)
 
 #Saves/catalogs cluster names to cell numbers
 write.csv(table(Idents(agg.combined.stroma)), file = "Cells_per_Cluster_Integrated_01.csv")
@@ -1016,21 +1115,25 @@ write.csv(yesFGF2.0_noFGF2.2_Markers, file = "All_DE_Genes_Cluster4v2_01.csv")
 InVivo.4_yesFGF2.0_Markers <- FindMarkers(agg.combined.stroma, ident.1 = "4", ident.2 = "0")
 write.csv(InVivo.4_yesFGF2.0_Markers, file = "All_DE_Genes_Cluster4v0_01.csv")
 
-#Make double feature plots for markers that separate stromal clusters
-plot1 <-  FeaturePlot(agg.combined.stroma, features = c("Thy1", "Pdgfra"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue","red"))
-Make_pdf("UMAP_plot_Pdgfra_Thy1_01.pdf",plot1,40,8)
-plot1 <- FeaturePlot(agg.combined.stroma, features = c("Pdgfrb", "Pdgfra"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue","red"))
-Make_pdf("UMAP_plot_Pdgfra_Pdgfra_01.pdf",plot1,40,8)
-plot1 <- FeaturePlot(agg.combined.stroma, features = c("Pdgfra", "Acta2"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "red","blue"))
-Make_pdf("UMAP_plot_Pdgfra_aSMA_01.pdf",plot1,40,8)
+#Pulls out the average expression of all genes in all clusters
+All.genes_Average_Expression <- AverageExpression(object = agg.combined.stroma)
+#Pulls out only the integrated genes average expression for each cluster
+Integrated.genes_Average_Expression <- All.genes_Average_Expression$integrated
+write.csv(Integrated.genes_Average_Expression, file = "All_Integrated.Anchor_Genes_perCluster_01.csv")
+plot1 <- pheatmap(Integrated.genes_Average_Expression, scale = "row", clustering_distance_rows = "correlation")
+Make_pdf("Heatmap_All_Integrated_Genes_perCluster_01.pdf",plot1,10,100)
+#Pulls out all genes average expression for each cluster
+RNA.genes_Average_Expression <- All.genes_Average_Expression$RNA
+write.csv(RNA.genes_Average_Expression, file = "All_RNA_Genes_perCluster_01.csv")
+#Make heatmap for all average RNA data from all clusters
+plot1 <- pheatmap(RNA.genes_Average_Expression, scale = "row", clustering_distance_rows = "correlation")
 
 #Extracts all integrated gene data from all cells
 #Grabs all genes/anchors used in the integration
 all.genes <- rownames(agg.combined.stroma)
 #Pulls all the data associated with anchored genes for all cells.
 All.genes.All.cells <- FetchData(object = agg.combined.stroma, vars = c("protocol","ident",all.genes), slot = "data")
-write.csv(All.genes.All.cells, file = "All_Genes_All_Cells_01.csv")
-
+write.csv(All.genes.All.cells, file = "All_Integrated.Anchor_Genes_perCell_01.csv")
 
 #New list with simple cluster names
 new.cluster.ids <- c("Pa_Pb_Thy1_00",
@@ -1049,3 +1152,184 @@ new.cluster.ids <- c("Pa_Pb_Thy1_00",
                      "Pb_Thy1_Acta2_CC_13",
                      "CC_14"
                      )
+
+####################### +/-FGF2  Oragnoid Integration data ##################################################
+#############################################################################################################
+
+#DATA integration between yesFGF2 and noFGF2 organoids, All data
+#base on https://rpubs.com/mathetal/integratedanalysis
+#which is based on https://satijalab.org/seurat/articles/integration_rpca.html
+#Loads saved dataset
+setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Integrated_YesNo_FGF2_All")
+#Loads noFGF2 organoid data that is only the stomal subset
+agg.noFGF2 <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_231_LigatedMock_noFGF2organoid/Organoid_noFGF2/R_Results_01/Organoid_noFGF2_Raw_(SEURAT_v4)_01.rds")
+#Loads yesFGF2 organoid data that is only the stomal subset
+agg.yesFGF2 <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Organoid_yesFGF2_Raw_(SEURAT_v3)_01.rds")
+#Sets metadata header and value to each dataset/Seurat Object for integration function
+agg.noFGF2@meta.data[, "sample"] <- "InVitro_noFGF2"
+agg.yesFGF2@meta.data[, "sample"] <- "InVitro_yesFGF2"
+#integration---------------------------------------------------------------
+#Merges the three datasets based on the metadata header where each cell is being described by the Protocol ID/header
+agg.combined = merge(agg.noFGF2, y = agg.yesFGF2, add.cell.ids = c("InVitro_noFGF2","InVitro_yesFGF2"), project = "sample")
+#Creates a new list of all Seurat objects based on the metadata
+run.list <- SplitObject(agg.combined, split.by = "sample")
+reference.list <- run.list[c("InVitro_noFGF2","InVitro_yesFGF2")]
+# Calculates "anchors", genes that are stable that can be used to determine cell proximity to each other
+# The anchor.feature default is 2000, but I found 3614 is the maximum anchors in this dataset and used as many anchors as by incrementally increasing this number until I found all possible features.
+run.anchors <- FindIntegrationAnchors(object.list = reference.list,anchor.features = 4000, dims = 1:40)
+# Creates an 'integrated' data assay of both datasets based on the anchors
+agg.combined <- IntegrateData(anchorset = run.anchors)
+# Specify that we will perform downstream analysis on the corrected data note that the original
+# Sets a new default level for integrated data to be stored, Unmodified data still resides in the 'RNA' assay
+DefaultAssay(agg.combined) <- "integrated"
+# Run the standard workflow for visualization and clustering
+agg.combined <- ScaleData(agg.combined, verbose = FALSE)
+agg.combined <- RunPCA(agg.combined, npcs = 40, verbose = FALSE)
+#Used ElbowPlot to find how many PCs/dimensions to use, using 20.
+ElbowPlot(agg.combined, ndims = 30, reduction = "pca")
+agg.combined <- FindNeighbors(agg.combined, reduction = "pca", dims = 1:20)
+agg.combined <- FindClusters(agg.combined, resolution = 0.6)
+agg.combined <- RunUMAP(agg.combined, reduction = "pca", dims = 1:20)
+# Saves integrated stromal data
+saveRDS(agg.combined, file = "Exp_231_235_ALL_(SEURAT_v3)_01.rds")
+setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Integrated_YesNo_FGF2_All")
+# Reads integrated stromal data
+agg.combined <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_235_FGF2_Organoid/R_Results_01/Integrated_YesNo_FGF2_All/Exp_231_235_ALL_(SEURAT_v3)_01.rds")
+#Graphs new data
+pdf("Integrated_UMAP_Sample_Label_01.pdf", width = 10, height = 5)
+  DimPlot(agg.combined, reduction = "umap", group.by = "sample", label = FALSE, label.size = 6, pt.size = 0.5, repel = TRUE) + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+dev.off()
+pdf("Integrated_UMAP_Cluster_Label_01.pdf", width = 8, height = 5)
+  DimPlot(agg.combined, reduction = "umap", group.by = "seurat_clusters", label = TRUE, label.size = 6, pt.size = 0.5, repel = TRUE) + NoLegend() + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+dev.off()
+pdf("Integrated_UMAP_Cluster_Label_SampleBreakdown_01.pdf", width = 16, height = 5)
+  DimPlot(agg.combined, reduction = "umap", group.by = "seurat_clusters",  split.by = "sample", label = TRUE, label.size = 6, pt.size = 0.5, repel = TRUE) + NoLegend() + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+dev.off()
+
+#Loop to create UMAP and violin plots for integrated data
+Gene_Graphs(Epithelial_Markers,agg.combined,"integrated")
+Gene_Graphs(Stromal_Markers,agg.combined,"integrated")
+Gene_Graphs(Mmp_Genes_of_Interest,agg.combined,"integrated")
+Gene_Graphs(TGFb_super_Genes_of_Interest,agg.combined,"integrated")
+Gene_Graphs(ECM_Genes_of_Interest,agg.combined,"integrated")
+Gene_Graphs(Cell_Cycle_Genes_of_Interest,agg.combined,"integrated")
+Gene_Graphs(Myofibroblast_Genes,agg.combined,"integrated")
+Gene_Graphs(Skin_fibroblast_Genes,agg.combined,"integrated")
+
+#Saves/catalogs cluster names to cell numbers
+write.csv(table(Idents(agg.combined)), file = "Cell_per_Cluster_Integrated_01.csv")
+#Generating Lists of differential gene expressions
+#Finds all marker genes for every cluster compared to all other clusters
+agg.combined.markers.All <- FindAllMarkers(agg.combined, min.pct = 0.25, logfc.threshold = 0.25)
+write.csv(agg.combined.markers.All, file = "All_Gene_Averages_Integrated_01.csv")
+#Finds all postive marker genes for every cluster compared to all other clusters
+agg.combined.markers.Pos <- FindAllMarkers(agg.combined, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+#Alternative method for finding all Postive marker genes, saves time.
+agg.combined.markers.Pos <- subset(agg.combined.markers.All, subset = avg_logFC > 0)
+write.csv(agg.combined.markers.Pos, file = "Positive_Gene_Averages_Integrated_01.csv")
+#Reduces to top 10 postive marker genes for every cluster compared to all other clusters
+agg.combined.markers.Pos.Top10 <- agg.combined.markers.Pos %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+write.csv(agg.combined.markers.Pos.Top10, file = "Positive_Top10_Gene_Averages_Integrated_01.csv")
+
+#Make double feature plots for markers that separate stromal clusters
+plot1 <-  FeaturePlot(agg.combined, features = c("Thy1", "Pdgfra"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "Magenta", "Green"))
+Make_pdf("UMAP_plot_Pdgfra_Thy1_01.pdf",plot1,40,8)
+plot1 <- FeaturePlot(agg.combined, features = c("Pdgfrb", "Pdgfra"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue", "Green"))
+Make_pdf("UMAP_plot_Pdgfra_Pdgfrb_01.pdf",plot1,40,8)
+plot1 <- FeaturePlot(agg.combined, features = c("Pdgfrb", "Acta2"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue", "red"))
+Make_pdf("UMAP_plot_Pdgfra_aSMA_01.pdf",plot1,40,8)
+
+# Finds and saves a .csv of cell numbers expressing certain genes
+#performs the counts based on the cluster assignment
+NumberCellperGene <- TotalCellExpringGene(agg.combined, genes = c("Pdgfra","Pdgfrb","Thy1","Acta2"), group.by = "seurat_clusters")
+write.csv(NumberCellperGene, file = "NumberOfCellsPerGenePerCluster_Pdgfra_Pdgfrb_Thy1_Acta2_01.csv")
+#performs the counts based on the sample assignment
+NumberCellperGene <- TotalCellExpringGene(agg.combined, genes = c("Pdgfra","Pdgfrb","Thy1","Acta2"), group.by = "sample")
+write.csv(NumberCellperGene, file = "NumberOfCellsPerGenePerSample_Pdgfra_Pdgfrb_Thy1_Acta2_01.csv")
+
+#Holds all cells and with sample and seurat_cluster data
+All_Cells <- FetchData(object = agg.combined, vars = c("sample","ident"))
+write.csv(All_Cells, file = "NumbersPerSamplePerCluster_Raw_01.csv")
+
+#New list with simple cluster names
+new.cluster.ids <- c("Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Stroma",
+                     "Epithelium",
+                     "Stroma",
+                     "Immune",
+                     "Neurons",
+                     "Endothelium"
+)
+
+#New list with specific cluster names
+new.cluster.ids <- c("Pa_Pb_Thy1_00",
+                     "Pa_Pb_Thy1_01",
+                     "Acta2_Pa_Pb_Thy1_02",
+                     "Pa_Pb_Thy1_03",
+                     "Acta2_04",
+                     "Acta2_Pa_Pb_Thy1_CC_05",
+                     "Pa_Pb_Thy1_06",
+                     "Pa_Pb_Thy1_07",
+                     "Pa_Pb_Thy1_08",
+                     "Epithelium_09",
+                     "Pb_Thy1_10",
+                     "Mast_CC_11",
+                     "Neurons_12",
+                     "Endothelium_13"
+)
+#Saves/catalogs cluster names to numbers
+write.csv(new.cluster.ids, file = "Cluster#_Names_Specific_integrated_01.csv")
+#Sets new layer with cluster names
+names(new.cluster.ids) <- levels(agg.combined)
+agg.combined <- RenameIdents(agg.combined, new.cluster.ids)
+#Creates a table showing number of cells per cluster
+write.csv(table(Idents(agg.combined)), file = "Cell_per_Cluster_Broad_Names_01.csv")
+#Draws a new UMAP plot with written labels from new.cluster.ids
+pdf("UMAP_Broad_labeled_01.pdf", width = 8, height = 5)
+  DimPlot(agg.combined, reduction = "umap", label = TRUE, label.size = 4, pt.size = 0.5, repel = TRUE) + NoLegend() + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+dev.off()
+pdf("UMAP_Broad_labeled_key_01.pdf", width = 8, height = 5)
+  DimPlot(agg.combined, reduction = "umap", label = FALSE, label.size = 1.5, pt.size = 0.5) + theme(title = element_text(size = 30), axis.title = element_text(size = 20), axis.text = element_text(size = 18))
+dev.off()
+
+#Dot plot of cell-type defining markers
+#List of genes to graph
+Genes_of_Interest <- c("Pdgfra", "Pdgfrb", "Cdh1", "Epcam", "Mcpt4", "Cma1", "Tubb2b", "Tubb3", "Cdh5", "Kdr", "Mki67", "Top2a")
+#Draws a Dot plot for genes of interest for broad labels
+pdf("DotPlot_GeneIDs_Broad_Labeled_integrated_01.pdf", width = 6, height = 3)
+  DotPlot(agg.combined, features = Genes_of_Interest, cols = "Spectral", col.min = 0, dot.scale = 5) +
+    RotatedAxis()
+dev.off()
+
+#List of genes to graph
+Genes_of_Interest <- c("Acta2", "Thy1", "Pdgfra", "Pdgfrb", "Cdh1", "Epcam", "Mcpt4", "Cma1", "Tubb2b", "Tubb3", "Cdh5", "Kdr", "Mki67", "Top2a")
+#Draws a Dot plot for genes of interest for broad labels
+pdf("DotPlot_GeneIDs_Specific_Labeled_integrated_01.pdf", width = 8, height = 4)
+  DotPlot(agg.combined, features = Genes_of_Interest, cols = "Spectral", col.min = 0, dot.scale = 5) +
+    RotatedAxis()
+dev.off()
+
+#List of genes to 
+Stromal_Markers <- c("Eng","Gli1","Thy1","Cnn1","Acta2","Pdgfrb","Pdgfra","Vim","Col1a1")
+pdf("DotPlot_GeneIDs_Specific_Labeled_integrated_StromaMarkers_01.pdf", width = 7, height = 4)
+DotPlot(agg.combined, features = Stromal_Markers, cols = "Spectral", col.min = 0, dot.scale = 5) +
+  RotatedAxis()
+dev.off()
+
+#List of genes to 
+Stromal_Ligands <- c("Fgf2","Fgf10","Bmp2","Bmp4","Bmp7","Kitl","Tgfb1","Tgfb2","Tgfb3","Wnt2","Wnt4","Areg","Ereg")
+pdf("DotPlot_GeneIDs_Specific_Labeled_integrated_StromaLigandss_01.pdf", width = 7, height = 4)
+DotPlot(agg.combined, features = Stromal_Ligands, cols = "Spectral", col.min = 0, dot.scale = 5) +
+  RotatedAxis()
+dev.off()
+
+#Loop to create UMAP and violin plots for integrated data
+Gene_Graphs_2(Stromal_Markers,agg.combined,"integrated_Labels")
+Gene_Graphs_2(Stromal_Ligands,agg.combined,"integrated_Labels")
