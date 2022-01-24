@@ -1,5 +1,6 @@
       #Version 4
-    #This version provides all data for any publications
+    #This version provides all data for 2022 publication
+	#These scripts for working with in-vivo E16 SMG dataset
   #Major parameter and statistical decisions made:
 #min.cells = 3, min.features = 200
 #subset = nFeature_RNA > 200 & nFeature_RNA < 9000 & percent.mt < 7
@@ -15,9 +16,67 @@
 #Epithelium: resolution = 1.1
 #Stroma: dims = 1:40 
 #Stroma: resolution = 0.8
-#3: code to regress out Cell cycling transcriptome from stromal data. 
-#4: code to integrate datasets from different scRNA seq experiments. 
+#3: code to regress out Cell cycling transcriptome from stromal data. This data is not used for publication.
+#4: code to integrate datasets from different scRNA seq experiments.  This data is not used for publication.
 
+
+############################## sessionInfo() ###################################################
+################################################################################################
+
+#R version 3.6.3 (2020-02-29)
+#Platform: x86_64-pc-linux-gnu (64-bit)
+#Running under: Debian GNU/Linux 10 (buster)
+
+#Matrix products: default
+#BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.3.5.so
+
+#locale:
+#  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+#[3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+#[5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=C             
+#[7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+#[9] LC_ADDRESS=C               LC_TELEPHONE=C            
+#[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+#attached base packages:
+#  [1] stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+#  [1] stringr_1.4.0   magrittr_1.5    patchwork_1.0.0 pheatmap_1.0.12
+#[5] ggplot2_3.3.0   dplyr_0.8.5     cowplot_1.0.0   Seurat_3.1.5   
+
+#loaded via a namespace (and not attached):
+#  [1] httr_1.4.1          tidyr_1.0.2         jsonlite_1.6.1     
+#[4] viridisLite_0.3.0   splines_3.6.3       lsei_1.2-0         
+#[7] leiden_0.3.3        gtools_3.8.2        assertthat_0.2.1   
+#[10] ggrepel_0.8.2       globals_0.12.5      pillar_1.4.3       
+#[13] lattice_0.20-44     glue_1.4.0          reticulate_1.15    
+#[16] digest_0.6.25       RColorBrewer_1.1-2  colorspace_1.4-1   
+#[19] htmltools_0.4.0     Matrix_1.2-18       plyr_1.8.6         
+#[22] pkgconfig_2.0.3     tsne_0.1-3          listenv_0.8.0      
+#[25] purrr_0.3.4         scales_1.1.0        RANN_2.6.1         
+#[28] gdata_2.18.0        RSpectra_0.16-0     Rtsne_0.15         
+#[31] tibble_3.0.1        farver_2.0.3        ellipsis_0.3.0     
+#[34] withr_2.4.2         ROCR_1.0-7          pbapply_1.4-2      
+#[37] lazyeval_0.2.2      survival_3.2-7      crayon_1.4.1       
+#[40] future_1.17.0       nlme_3.1-152        MASS_7.3-51.5      
+#[43] gplots_3.0.3        ica_1.0-2           tools_3.6.3        
+#[46] fitdistrplus_1.0-14 data.table_1.12.8   lifecycle_0.2.0    
+#[49] plotly_4.9.2.1      munsell_0.5.0       cluster_2.1.0      
+#[52] irlba_2.3.3         compiler_3.6.3      rsvd_1.0.3         
+#[55] caTools_1.18.0      rlang_0.4.5         grid_3.6.3         
+#[58] ggridges_0.5.2      rstudioapi_0.13     RcppAnnoy_0.0.16   
+#[61] rappdirs_0.3.1      htmlwidgets_1.5.1   igraph_1.2.5       
+#[64] labeling_0.3        bitops_1.0-6        npsurv_0.4-0       
+#[67] gtable_0.3.0        codetools_0.2-16    reshape2_1.4.4     
+#[70] R6_2.5.0            gridExtra_2.3       zoo_1.8-7          
+#[73] uwot_0.1.8          future.apply_1.5.0  KernSmooth_2.23-16 
+#[76] ape_5.4             stringi_1.4.6       parallel_3.6.3     
+#[79] Rcpp_1.0.4.6        vctrs_0.2.4         sctransform_0.2.1  
+#[82] png_0.1-7           tidyselect_1.0.0    lmtest_0.9-37  
+
+############################## Libraries and start up ##########################################
+################################################################################################
 
 #Allows fro python UMAP calculations
 reticulate::use_condaenv(condaenv = "seurat", conda = "/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/miniconda3/bin/conda")
@@ -139,8 +198,10 @@ pdf("TSNE_E16_04.pdf")
 dev.off() 
 
 #Generates a UMAP plot
-pdf("UMAP_E16_04.pdf", width = 15, height = 10)
-  DimPlot(agg.E16, reduction = "umap", label = TRUE)
+pdf("UMAP_E16_04.pdf", width = 8, height = 6)
+  DimPlot(agg.E16, reduction = "umap", label = TRUE, label.size = 4, pt.size = 0.5, repel = TRUE) +
+    NoLegend() +
+    theme(axis.title = element_text(size = 20), axis.text = element_text(size = 15))
 dev.off()
 
 #Saves Formated dataset after all major computational processing
@@ -148,6 +209,10 @@ saveRDS(agg.E16, file = "E16_SMG_Raw_(SEURAT_v4)_04.rds")
 #Loads saved dataset
 setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04")
 agg.E16 <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/E16_SMG_Raw_(SEURAT_v4)_04.rds")
+
+
+############################## Gene for cell identification ####################################
+################################################################################################
 
     #All UMAP/Feature gene plot maps used for assigning clusters labels
 	#NOTE at the end of these there is a coded For-loop that will do this automatically for any gene lists.
@@ -757,9 +822,11 @@ Genes_Mascharak2021 <- c("Msn",
 #https://advances.sciencemag.org/content/7/24/eabg6005?elqTrackId=5ca8a69ac8ff4f3080e47a4a072a3d66&elq=6c66d2cfe7a44810b72937392ed0cbc5&elqaid=31499&elqat=1&elqCampaignId=10598
 Genes_Xie2021 <- c("Eln", "Cxcl14", "Npnt", "Fn1", "Hspb1", "Xist", "Nebl", "Tagln", "Cd74", "Cxcl1", "Cxcl2", "Cxcl5", "Cxcl10", "Cxcl11", "Cxcl12", "Cxcl16")
 FGFR_Genes <- c("Fgfr1", "Fgfr2", "Fgfr3", "Fgfr4", "Fgfrl1")
+#https://www.nature.com/articles/s41586-020-2941-1
+Myofibroblast_Genes <- c("Notch3", "Rgs5", "Meg3", "Colec11", "Cxcl12")
 
 #Loop to create Feature plots and violin plots for Gene lists
-for(i in FGFR_Genes[1:5]){
+for(i in Myofibroblast_Genes[1:5]){
   print(i)
   plot3 <- FeaturePlot(agg.E16, features = i, min.cutoff = "q9")
   plot4 <- VlnPlot(agg.E16, features = i) + NoLegend()
@@ -772,6 +839,23 @@ for(i in FGFR_Genes[1:5]){
       print(plot4)
   dev.off()  
 }
+
+#Make double feature plots for markers that shows overlap of Gli1 with Pdgfra
+pdf("UMAP_E16_Pdgfra_Gli1_04.pdf", width = 40, height = 8)
+  FeaturePlot(agg.E16, features = c("Pdgfra", "Gli1"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "Green","Red"))
+dev.off()
+pdf("UMAP_E16_Pdgfrb_Gli1_04.pdf", width = 40, height = 8)
+  FeaturePlot(agg.E16, features = c("Pdgfrb", "Gli1"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "Blue","Red"))
+dev.off()
+pdf("UMAP_E16_Pdgfra_Gli3_04.pdf", width = 40, height = 8)
+  FeaturePlot(agg.E16, features = c("Pdgfra", "Gli3"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "Green","Red"))
+dev.off()
+pdf("UMAP_E16_Pdgfrb_Gli3_04.pdf", width = 40, height = 8)
+  FeaturePlot(agg.E16, features = c("Pdgfrb", "Gli3"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "Blue","Red"))
+dev.off()
+
+############################## Differential gene list creation #################################
+################################################################################################
 
   #Generating Lists of differential gene expressions
 #Finds all marker genes for every cluster compared to all other clusters
@@ -1105,7 +1189,10 @@ pdf("Heatmap_Top10_Stroma_E16_04.pdf", width = 60, height = 30)
   DoHeatmap(agg.E16.Stroma, features = agg.E16.markers.Pos.Top10$gene)
 dev.off()
 
-  #Epithelium subset analysis
+
+############################## Epithelium subset analysis ######################################
+################################################################################################
+ 
   #Pulls out the epithelial data and re-normalized the cells to only epithelial cells
 #Creates a subset of agg.E16 based on Epcam expression, epithelial cells
 agg.E16.Epi <- subset(agg.E16.2, idents = c("Epithelium"))
@@ -1206,8 +1293,9 @@ pdf("DotPlot_Epi_Top10genes_Labeled_E16_04.pdf", width = 20, height = 10)
             RotatedAxis()
 dev.off()
 
+############################## Stromal subset analysis ######################################
+################################################################################################
 
-	#Stormal subset analysis 
   #Re-calculations of Stroma compared to other stroma
 #Creates a subset of agg.E16 based on "Stroma" label
 agg.E16.Stroma <- subset(agg.E16.2, idents = c("Stroma"))
@@ -1403,247 +1491,89 @@ pdf("UMAP_E16_Stroma_Pdgfrb_aSMA_04.pdf", width = 40, height = 8)
     FeaturePlot(agg.E16.Stroma, features = c("Pdgfrb", "Acta2"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "blue","red"))
 dev.off()
 
-  # Cell cycle regression for Stroma
-#https://satijalab.org/seurat/articles/cell_cycle_vignette.html
-#Before:
-DimPlot(agg.E16.Stroma, reduction = "umap", label = FALSE, label.size = 6, pt.size = 0.5, repel = TRUE) + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 18))
-#Makes a copy of the stromal data
-agg.E16.Stroma.CC <- agg.E16.Stroma
-
-# A list of cell cycle markers, from Tirosh et al, 2015, is loaded with Seurat.  We can
-# segregate this list into markers of G2/M phase and markers of S phase
-s.genes <- cc.genes$s.genes
-g2m.genes <- cc.genes$g2m.genes
-#Assigns scoring to each stromal clusters based on G1,S,GM2, phases
-agg.E16.Stroma.CC <- CellCycleScoring(agg.E16.Stroma.CC, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
-head(agg.E16.Stroma.CC[[]])
-# Visualize the distribution of cell cycle markers across
-pdf("Stroma_CellCycle_Distribution_04.pdf", width = 20, height = 10)
-    RidgePlot(agg.E16.Stroma.CC, features = c("Pcna", "Top2A", "Mcm6", "Mki67"), ncol = 2)
-dev.off()
-# Re-run PCA based on cell cycling genes to see that they do in fact seperate out
-agg.E16.Stroma.CC <- RunPCA(agg.E16.Stroma.CC, features = c(s.genes, g2m.genes))
-# Without re-running the UMAP dimensional reductions, you can label the previous reduction using the unbiased PCs and show that those clusters do infact fall based on cell cycle state.
-pdf("Stroma_CellCycle_UMAP_04.pdf", width = 6.25, height = 5)
-    DimPlot(agg.E16.Stroma.CC)
-dev.off()
-# Regress out the cell cycling genes by re-scaling the data with the cell cycle genes normalized out.
-agg.E16.Stroma.CC <- ScaleData(agg.E16.Stroma.CC, vars.to.regress = c("S.Score", "G2M.Score"), features = rownames(agg.E16.Stroma.CC))
-# Now, a PCA on the variable genes no longer returns components associated with cell cycle
-agg.E16.Stroma.CC <- RunPCA(agg.E16.Stroma.CC, features = VariableFeatures(agg.E16.Stroma.CC), nfeatures.print = 10)
-# Shows PCA plot with cell cycle genes regressed out.
-pdf("Stroma_CellCycle_PCA_04.pdf", width = 6.25, height = 5)
-    DimPlot(agg.E16.Stroma.CC, reduction = "pca")
-dev.off()
-ElbowPlot(agg.E16.Stroma.CC, ndims = 50)
-#Need to re-run all clustering functions
-#Reruns for constructing a KNN graph based on the euclidean distance in PCA space, and refine the edge weights between any two cells based on the shared overlap in their local neighborhoods (Jaccard similarity), and takes as input the previously defined dimensionality of the dataset (first 40 PCs, dims = 40), how many dimentions do you want included for the analysis.
-agg.E16.Stroma.CC <- FindNeighbors(agg.E16.Stroma.CC, dims = 1:30) 
-#Reruns generation of the Clusters, resolution increases the specificity of each cluster, resolution = 2.0, the default is 1.0
-agg.E16.Stroma.CC <- FindClusters(agg.E16.Stroma.CC, resolution = 0.8)
-#Generates a t-SNE dataset, use the same dimensionality you used for FindNeighbors
-agg.E16.Stroma.CC <- RunTSNE(agg.E16.Stroma.CC, dims = 1:30)
-#Generates a UMAP dataset, use the same dimensionality you used for FindNeighbors
-agg.E16.Stroma.CC <- RunUMAP(agg.E16.Stroma.CC, dims = 1:30)
-# AFTER:
-pdf("Stroma_CellCycle_Regressed_UMAP_04.pdf", width = 6.25, height = 5)
-    DimPlot(agg.E16.Stroma.CC, reduction = "umap", label = FALSE, label.size = 6, pt.size = 0.5, repel = TRUE) + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 18))
-dev.off()
-#Saves Formated dataset after all major computational processing
-saveRDS(agg.E16.Stroma.CC, file = "E16_SMG_Raw_Str_CC_Regressed(SEURAT_v4)_04.rds")
-#Loads saved dataset
-setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Stroma_only")
-agg.E16.Stroma.CC <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Stroma_only/E16_SMG_Raw_Str_CC_Regressed(SEURAT_v4)_04.rds")
-
-
-  #Intergrate Second E16 dataset Method 1
-# THIS IS THE METHOD I AM CURRENTLY USING
-#base on https://rpubs.com/mathetal/integratedanalysis
-agg.E16.1 <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/E16_SMG_Raw_(SEURAT_v4)_04.rds")
-agg.E16.2 <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_223_E16_CD1_NOD_20210408/R_results_02/E16_SMG_Raw_(SEURAT_v4)_02.rds")
-#Sets metadata header and value to each dataset/Seurat Object for integration function
-agg.E16.1@meta.data[, "protocol"] <- "Run_1"
-agg.E16.2@meta.data[, "protocol"] <- "Run_2"
-#integration---------------------------------------------------------------
-#Merges the two datasets based on the metadata header where each cell is being described by the Protocol ID
-agg.E16.combined = merge(agg.E16.1, y = agg.E16.2, add.cell.ids = c("Run_1", "Run_2"), project = "protocol")
-#Creates a new list of both Seurat objects based on the 
-run.list <- SplitObject(agg.E16.combined, split.by = "protocol")
-reference.list <- run.list[c("Run_1", "Run_2")]
-# Calculates "anchors", genes that are stable that can be used to determine cell proximity to each other
-run.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:40)
-# Creates an 'integrated' data assay of both datasets
-agg.E16.combined <- IntegrateData(anchorset = run.anchors)
-# Specify that we will perform downstream analysis on the corrected data note that the original
-# Sets a new default level for integrated data to be stored, Unmodified data still resides in the 'RNA' assay
-DefaultAssay(agg.E16.combined) <- "integrated"
-# Run the standard workflow for visualization and clustering
-agg.E16.combined <- ScaleData(agg.E16.combined, verbose = FALSE)
-agg.E16.combined <- RunPCA(agg.E16.combined, npcs = 40, verbose = FALSE)
-agg.E16.combined <- FindNeighbors(agg.E16.combined, reduction = "pca", dims = 1:40)
-agg.E16.combined <- FindClusters(agg.E16.combined, resolution = 0.5)
-agg.E16.combined <- RunUMAP(agg.E16.combined, reduction = "pca", dims = 1:40)
-
-# Saves integrated data
-saveRDS(agg.E16.combined, file = "E16_SMG_209_223_(SEURAT_v4)_04.rds")
-setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Integrated_Exp_209_223")
-# Reads data
-agg.E16.combined <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Integrated_Exp_209_223/E16_SMG_209_223_(SEURAT_v4)_04.rds")
-
-pdf("Integrated_UMAP_Run#_04.pdf", width = 6.25, height = 5)
-    DimPlot(agg.E16.combined, reduction = "umap", group.by = "protocol")
-dev.off()
-
-pdf("Integrated_UMAP_Cluster#_04.pdf", width = 6.25, height = 5)
-    DimPlot(agg.E16.combined, reduction = "umap", group.by = "seurat_clusters")
-dev.off()
-
-FeaturePlot(agg.E16.combined, features = c("Acta2", "Epcam"), blend = TRUE, pt.size = 2.0, cols = c("lightgrey", "Magenta", "Green"))
-FeaturePlot(agg.E16.combined, features = "Epcam", pt.size = 2.0)
-
-  #Intergrate Second E16 dataset Method 2
-# based on https://satijalab.org/seurat/articles/integration_rpca.html
-#Reads the 10x Generated data that is in matrix form; barcodes, features, matrix, into a large data matrix
-agg.E16.data <- Read10X(data.dir =
-                        "/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/68.195.245.254/results/filtered_feature_bc_matrix")
-agg.data.E16 <- Read10X(data.dir =
-                          "/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_223_E16_CD1_NOD_20210408/E16/outs/filtered_feature_bc_matrix")
-#Creates Seurat object using the 10x raw data matrix
-agg.E16.1 <- CreateSeuratObject(agg.E16.data, project = "agg.E16", min.cells = 3,
-                              min.features = 200)
-agg.E16.2 <- CreateSeuratObject(agg.data.E16, project = "agg.data.E16", min.cells = 3,
-                                   min.features = 200)
-#Creates new parameter selecting for mitochondrial genes
-agg.E16.1[["percent.mt"]] <- PercentageFeatureSet(agg.E16.1, pattern = "^mt-")
-agg.E16.2[["percent.mt"]] <- PercentageFeatureSet(agg.E16.2, pattern = "^mt-")
-#7% was choosen because if your view the mitochondrial distribution as a normal distribution the lower bound would be 0, the center would be ~3.5%, and the upperbound would be ~7%
-agg.E16.1 <- subset(agg.E16.1, subset = nFeature_RNA > 200 & nFeature_RNA < 9000 & percent.mt < 7)
-agg.E16.2 <- subset(agg.E16.2, subset = nFeature_RNA > 200 & nFeature_RNA < 9000 & percent.mt < 10)
-#Sets metadata header and value to each dataset/Seurat Object for integration function
-agg.E16.1@meta.data[, "protocol"] <- "Run_1"
-agg.E16.2@meta.data[, "protocol"] <- "Run_2"
-#integration---------------------------------------------------------------
-#Merges the two datasets based on the metadata header where each cell is being described by the Protocol ID
-agg.E16.combined = merge(agg.E16.1, y = agg.E16.2, add.cell.ids = c("Run_1", "Run_2"), project = "protocol")
-#Creates a new list of both Seurat objects based on the 
-run.list <- SplitObject(agg.E16.combined, split.by = "protocol")
-reference.list <- run.list[c("Run_1", "Run_2")]
-# Calculates "anchors", genes that are stable that can be used to determine cell proximity to each other
-run.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:40)
-# Creates an 'integrated' data assay of both datasets
-agg.E16.combined <- IntegrateData(anchorset = run.anchors)
-# Specify that we will perform downstream analysis on the corrected data note that the original
-# Sets a new default level for integrated data to be stored, Unmodified data still resides in the 'RNA' assay
-DefaultAssay(agg.E16.combined) <- "integrated"
-# Run the standard workflow for visualization and clustering
-agg.E16.combined <- ScaleData(agg.E16.combined, verbose = FALSE)
-agg.E16.combined <- RunPCA(agg.E16.combined, npcs = 40, verbose = FALSE)
-agg.E16.combined <- FindNeighbors(agg.E16.combined, reduction = "pca", dims = 1:40)
-agg.E16.combined <- FindClusters(agg.E16.combined, resolution = 0.5)
-agg.E16.combined <- RunUMAP(agg.E16.combined, reduction = "pca", dims = 1:40)
-# Saves integrated data
-saveRDS(agg.E16.combined, file = "E16_SMG_209_223_(SEURAT_v4)_04.rds")
-setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Integrated_Exp_209_223")
-# Reads data
-agg.E16.combined <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Integrated_Exp_209_223/E16_SMG_209_223_(SEURAT_v4)_04.rds")
-
-pdf("Integrated_UMAP_Run#_04.pdf", width = 6.25, height = 5)
-DimPlot(agg.E16.combined, reduction = "umap", group.by = "protocol")
-dev.off()
-
-pdf("Integrated_UMAP_Cluster#_04.pdf", width = 6.25, height = 5)
-DimPlot(agg.E16.combined, reduction = "umap", group.by = "seurat_clusters")
-dev.off()
-
-  # Cell cycle regression for Integrated data
-#https://satijalab.org/seurat/articles/cell_cycle_vignette.html
-# A list of cell cycle markers, from Tirosh et al, 2015, is loaded with Seurat.  We can
-# segregate this list into markers of G2/M phase and markers of S phase with additional markers, the histones
-s.genes <- cc.genes$s.genes
-g2m.genes <- cc.genes$g2m.genes
-# Function to convert human gene symbols into mouse gene symbols
-#https://gist.github.com/FloWuenne/f8fc922477df04c1642e9d8945c48d47
-#https://rjbioinformatics.com/2016/10/14/converting-mouse-to-human-gene-names-with-biomart-package/
-convertHumanGeneList <- function(x){
-  
-  require("biomaRt")
-  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  
-  genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = x , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
-  
-  humanx <- unique(genesV2[, 2])
-  
-  no_mouse_genes <- length(x)
-  no_human_genes <- length(humanx)
-  
-  if(no_human_genes != no_mouse_genes){
-    print("Some genes could not be translated!")
-    genes_not_trans <- setdiff(x,genesV2$HGNC.symbol)
-    print("These genes could not be translated:")
-    print(genes_not_trans)
-    print(paste("A total number of ",length(genes_not_trans),"genes could not be translated!"),sep=" ")
-  }else{
-    print("All genes were translated successfully!")
+  #First method for counting cells
+# Function that can calculate proportion of cells expressing a gene
+# https://github.com/satijalab/seurat/issues/371
+# updated 1/31/2020 to accommodate V3.1
+# updated 2/4/2020 to output "NA" for genes not detected in certain subgroups
+# calculates total cells expressing a gene (raw counts > 0) by metadata groups
+# can be grouped by different samples types or cluster_# based on metadata
+# 'ncells' counts to total number of cells, can be passed to have percentages in calc_helper
+# you can adjust the threshold for RNA count to select for cells with more 'higher' expression
+PrctCellExpringGene <- function(object, genes, group.by = "all"){
+  if(group.by == "all"){
+    prct = unlist(lapply(genes,calc_helper, object=object))
+    result = data.frame(Markers = genes, Cell_proportion = prct)
+    return(result)
   }
   
-  # Print all gene names that could not be translated and the number of genes that were not translated
-  
-  return(humanx)
-}  
-s.genes <- convertHumanGeneList(s.genes)
-g2m.genes <- convertHumanGeneList(g2m.genes)
-# Addes histones to s-phase gene list
-s.genes <- c(s.genes, "Hist1h1a", "Hist1h1b", "Hist1h2ae")
-#Assigns scoring to each stromal clusters based on G1,S,GM2, phases
-agg.E16.combined.CC <- CellCycleScoring(agg.E16.combined, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
-head(agg.E16.combined.CC[[]])
-# Visualize the distribution of cell cycle markers across
-pdf("Integrated_CellCycle_Distribution_04.pdf", width = 20, height = 10)
-  RidgePlot(agg.E16.combined.CC, features = c("Pcna", "Top2A", "Mcm6", "Mki67"), ncol = 2)
-dev.off()
-# Re-run PCA based on cell cycling genes to see that they do in fact seperate out
-agg.E16.combined.CC <- RunPCA(agg.E16.combined.CC, features = c(s.genes, g2m.genes))
-# Without re-running the UMAP dimensional reductions, you can label the previous reduction using the unbiased PCs and show that those clusters do infact fall based on cell cycle state.
-pdf("Integrated_CellCycle_UMAP_04.pdf", width = 6.25, height = 5)
-  DimPlot(agg.E16.combined.CC)
-dev.off()
-# Regress out the cell cycling genes by re-scaling the data with the cell cycle genes normalized out.
-agg.E16.combined.CC <- ScaleData(agg.E16.combined.CC, vars.to.regress = c("S.Score", "G2M.Score"), features = rownames(agg.E16.combined.CC))
-# Now, a PCA on the variable genes no longer returns components associated with cell cycle
-agg.E16.combined.CC <- RunPCA(agg.E16.combined.CC, features = VariableFeatures(agg.E16.combined.CC), nfeatures.print = 10)
-# Shows PCA plot with cell cycle genes regressed out.
-pdf("Integrated_CellCycle_PCA_04.pdf", width = 6.25, height = 5)
-  DimPlot(agg.E16.combined.CC, reduction = "pca")
-dev.off()
-ElbowPlot(agg.E16.combined.CC, ndims = 50)
-#Need to re-run all clustering functions
-#Reruns for constructing a KNN graph based on the euclidean distance in PCA space, and refine the edge weights between any two cells based on the shared overlap in their local neighborhoods (Jaccard similarity), and takes as input the previously defined dimensionality of the dataset (first 40 PCs, dims = 40), how many dimentions do you want included for the analysis.
-agg.E16.combined.CC <- FindNeighbors(agg.E16.combined.CC, dims = 1:30) 
-#Reruns generation of the Clusters, resolution increases the specificity of each cluster, resolution = 2.0, the default is 1.0
-agg.E16.combined.CC <- FindClusters(agg.E16.combined.CC, resolution = 0.8)
-#Generates a t-SNE dataset, use the same dimensionality you used for FindNeighbors
-agg.E16.combined.CC <- RunTSNE(agg.E16.combined.CC, dims = 1:30)
-#Generates a UMAP dataset, use the same dimensionality you used for FindNeighbors
-agg.E16.combined.CC <- RunUMAP(agg.E16.combined.CC, dims = 1:30)
-# AFTER:
-pdf("Integrated_CellCycle_Regressed_UMAP_04.pdf", width = 6.25, height = 5)
-  DimPlot(agg.E16.combined.CC, reduction = "umap", label = FALSE, label.size = 6, pt.size = 0.5, repel = TRUE) + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 18))
-dev.off()
-#Saves Formated dataset after all major computational processing
-saveRDS(agg.E16.combined.CC, file = "E16_SMG_Integrated_CC_Regressed(SEURAT_v4)_04.rds")
-#Loads saved dataset
-setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Integrated_Exp_209_223")
-agg.E16.combined.CC <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/Integrated_Exp_209_223/E16_SMG_Integrated_CC_Regressed(SEURAT_v4)_04.rds")
-#Subset out stroma only cells
-agg.E16.combined.CC.Stroma <- subset(agg.E16.combined.CC, idents = c("0",
-                                                                     "1",
-                                                                     "2",
-                                                                     "7",
-                                                                     "9",
-                                                                     "12",
-                                                                     "21"))
-DimPlot(agg.E16.combined.CC.Stroma, reduction = "umap", label = FALSE, label.size = 6, pt.size = 0.5, repel = TRUE) + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 18))
-#Saves Formated dataset after all major computational processing
-saveRDS(agg.E16.combined.CC.Stroma, file = "E16_SMG_Integrated_CC_Regressed_Stroma(SEURAT_v4)_04.rds")
+  else{        
+    list = SplitObject(object, group.by)
+    factors = names(list)
+    
+    results = lapply(list, PrctCellExpringGene, genes=genes)
+    for(i in 1:length(factors)){
+      results[[i]]$Feature = factors[i]
+    }
+    combined = do.call("rbind", results)
+    return(combined)
+  }
+}
+# for total cells:
+calc_helper <- function(object,genes){
+  counts = object[['RNA']]@counts
+  ncells = ncol(counts)
+  if(genes %in% row.names(counts)){
+    sum(counts[genes,]>0)
+  }else{return(NA)}
+}
+# for percentage of cells use this function:
+#calc_helper <- function(object,genes){
+#  counts = object[['RNA']]@counts
+#  ncells = ncol(counts)
+#  if(genes %in% row.names(counts)){
+#    sum(counts[genes,]>0)/ncells
+#  }else{return(NA)}
+#}
 
+# Finds and saves a .csv of cell numbers expressing certain genes
+#performs the counts based on the cluster assignment
+#Loads saved dataset
+setwd("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04")
+agg.E16 <- readRDS("/network/rit/lab/larsenlab-rit/Next_Generation_Sequencing_Data/scRNAseq/Exp_209_E16_Str_Isolation_scRNA_202001026/R_results_04/E16_SMG_Raw_(SEURAT_v4)_04.rds")
+NumberCellperGene <- PrctCellExpringGene(agg.E16,genes = c("Pdgfra","Pdgfrb"), group.by = "seurat_clusters")
+write.csv(NumberCellperGene, file = "NumberOfCellsPerGene_Pdgfra_Pdgfrb_04.csv")
+
+  #Second method for counting cells, can do co-positive cells
+#https://www.rdocumentation.org/packages/Seurat/versions/3.1.0/topics/FetchData
+#This way for scripting
+#FetchData() can pull out cell, gene expression data, and any other data from Seurat objects
+CellData <- FetchData(agg.E16, vars = c("Pdgfra","Pdgfrb","Gli1","Acta2"), slot = "data")
+#Calculates the sum of cells that express gene1
+Pdgfra_Pos <- sum(CellData$Pdgfra>0)
+#Calculates the sum of cells that express gene2
+Pdgfrb_Pos <- sum(CellData$Pdgfrb>0)
+#Calculates the sum of cells that express gene3
+Gli1_Pos <- sum(CellData$Gli1>0)
+#Calculates the sum of cells that express gene4
+Acta2_Pos <- sum(CellData$Acta2>0)
+#Subsets the data for Postive for gene1 and then positive for gene2 then positive for gene3
+Co_Postitive_cell_ID <- CellData %>% subset(Pdgfra>0) %>% subset(Pdgfrb>0) %>% subset(Acta2>0)  
+#Number of Co_positive cells
+Co_Postitive_cell_Total <- nrow(Co_Postitive_cell_ID)
+
+#This is a function that does the same thing
+# for total co-positive cells:
+Co_Positive <- function(object,gene1,gene2){
+  CellData <- FetchData(object, vars = c(gene1,gene2), slot = "data")
+  print(head(CellData))
+  Gene1_total_cells <- sum(CellData[,gene1]>0)
+  cat("Total cells positive for", gene1,Gene1_total_cells," ")
+  Gene2_total_cells <- sum(CellData[,gene2]>0)
+  cat("Total cells positive for", gene2,Gene2_total_cells)
+  Co_Postitive_cell_ID <- subset(CellData, CellData[,gene1]>0)
+  Co_Postitive_cell_ID <- subset(Co_Postitive_cell_ID, Co_Postitive_cell_ID[,gene2]>0)
+  print(head(Co_Postitive_cell_ID))
+  Co_Postitive_cell_Total <- nrow(Co_Postitive_cell_ID)
+  cat("Total cells positive for",gene1," & ",gene2," ", Co_Postitive_cell_Total)
+}
